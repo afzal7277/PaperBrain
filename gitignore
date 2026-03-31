@@ -1,0 +1,53 @@
+# Environment
+.env
+*.env
+.env.*
+!env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Data (sensitive — do not push)
+data/users.json
+data/chroma_db/
+data/buckets.json
+
+# Keep data folder tracked
+!data/.gitkeep
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+logs/
+
+# Temp
+tmp/
+temp/
+*.tmp
