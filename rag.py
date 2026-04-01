@@ -1,6 +1,15 @@
 import uuid
 import tempfile
 import os
+import warnings
+import streamlit as st
+
+# Suppress HuggingFace/transformers noise
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+warnings.filterwarnings("ignore")
+
 from typing import List
 import pypdf
 from groq import Groq
@@ -8,8 +17,10 @@ from bucket_manager import get_collection, add_document_meta, delete_document_me
 from config import GROQ_API_KEY, GROQ_MODEL, TOP_K_RESULTS, MAX_CHUNK_WORDS, CHUNK_OVERLAP
 
 
-# ── Groq client ───────────────────────────────────────
+# ── Groq client (cached) ──────────────────────────────
+@st.cache_resource(show_spinner=False)
 def get_groq_client():
+    """Cached Groq client — created once, reused across all sessions."""
     return Groq(api_key=GROQ_API_KEY)
 
 

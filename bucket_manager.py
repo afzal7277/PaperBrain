@@ -1,6 +1,7 @@
 import json
 import os
 import chromadb
+import streamlit as st
 from chromadb.utils import embedding_functions
 from config import CHROMA_DIR, EMBEDDING_MODEL, DATA_DIR
 
@@ -15,7 +16,9 @@ def get_chroma_client():
     return _client
 
 
+@st.cache_resource(show_spinner="Loading embedding model...")
 def get_embedding_fn():
+    """Cached embedding function — loads once, reused across all sessions."""
     return embedding_functions.SentenceTransformerEmbeddingFunction(
         model_name=EMBEDDING_MODEL
     )

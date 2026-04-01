@@ -1,4 +1,10 @@
 import os
+import warnings
+warnings.filterwarnings("ignore")
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
 from dotenv import load_dotenv
 
 load_dotenv()
