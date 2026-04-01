@@ -1,0 +1,8 @@
+PaperBrain Test Results
+============================================================
+Timestamp : 2026-04-01T13:11:24.878237
+Mode      : all
+Status    : FAILED
+Exit Code : 4
+============================================================
+Run: C:\Users\Test\Desktop\Zafff\Projects\PaperBrain\venv\Scripts\python.exe -m pytest tests/
