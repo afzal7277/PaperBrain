@@ -1,7 +1,8 @@
-# 📄 RAG Chatbot — Multi-Bucket, Role-Based PDF Assistant
+# 🧠 PaperBrain — AI-Powered PDF Chatbot
 
-A fully free, production-ready RAG chatbot built with Streamlit + Groq + ChromaDB.
-Upload PDFs into domain-specific buckets, assign users to buckets, and chat with your documents.
+> Turn any PDF into a conversation. PaperBrain lets you chat with your documents using AI-powered bucket-based knowledge management.
+
+Built with **Streamlit + Groq (Llama 3.1 8B) + ChromaDB + sentence-transformers** — 100% free, no paid services.
 
 ---
 
@@ -12,7 +13,7 @@ Upload PDFs into domain-specific buckets, assign users to buckets, and chat with
 | 🪣 Dynamic Buckets | Create named buckets for any domain (Medical, Sales, Legal...) |
 | 🔐 Role-Based Access | Admin and User roles with per-user bucket permissions |
 | 🤖 Free LLM | Groq (Llama 3.1 8B) — no cost |
-| 🔢 Local Embeddings | sentence-transformers — runs locally, free |
+| 🔢 Local Embeddings | sentence-transformers — cached, runs locally, free |
 | 🗄️ Vector Store | ChromaDB persistent store |
 | 🔒 Password Hashing | bcrypt |
 | 💬 Multi-turn Chat | Conversation history per bucket per session |
@@ -27,18 +28,27 @@ Upload PDFs into domain-specific buckets, assign users to buckets, and chat with
 ## 📁 Project Structure
 
 ```
-rag-chatbot/
-├── app.py               # Entry point — login + routing
-├── auth.py              # Auth, hashing, session, user management
-├── admin.py             # Admin UI: dashboard, buckets, users, chat
-├── chat.py              # User chat UI
-├── rag.py               # RAG pipeline: ingest, retrieve, generate
-├── bucket_manager.py    # Bucket CRUD + ChromaDB collections
-├── config.py            # Settings and constants
+PaperBrain/
+├── app.py                  # Entry point — login + routing
+├── auth.py                 # Auth, hashing, session, user management
+├── admin.py                # Admin UI: dashboard, buckets, users, chat
+├── chat.py                 # User chat UI
+├── rag.py                  # RAG pipeline: ingest, retrieve, generate
+├── bucket_manager.py       # Bucket CRUD + ChromaDB collections
+├── config.py               # Settings and constants
+├── run_tests.py            # Test runner — saves results to test_results/
+├── pytest.ini              # Pytest configuration
 ├── data/
-│   ├── users.json       # User store (auto-created)
-│   ├── buckets.json     # Bucket metadata (auto-created)
-│   └── chroma_db/       # Vector store (auto-created)
+│   ├── users.json          # User store (auto-created on first run)
+│   ├── buckets.json        # Bucket metadata (auto-created)
+│   └── chroma_db/          # Vector store (auto-created)
+├── tests/
+│   ├── conftest.py         # Shared fixtures with guaranteed cleanup
+│   ├── test_auth.py        # Auth unit tests (20 tests)
+│   ├── test_buckets.py     # Bucket unit tests (20 tests)
+│   ├── test_rag.py         # RAG pipeline tests (18 tests)
+│   └── test_qa_eval.py     # QA scoring + bucket isolation tests
+├── test_results/           # Auto-created, stores all test output
 ├── requirements.txt
 └── .env
 ```
@@ -47,45 +57,43 @@ rag-chatbot/
 
 ## 🚀 Setup & Run
 
-### 1. Clone / Download the project
-
-```bash
-cd rag-chatbot
-```
-
-### 2. Create virtual environment
+### Step 1 — Create virtual environment
 
 ```bash
 python -m venv venv
-source venv/bin/activate      # Windows: venv\Scripts\activate
+source venv/bin/activate        # Mac/Linux
+venv\Scripts\activate           # Windows
 ```
 
-### 3. Install dependencies
+### Step 2 — Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Get a free Groq API key
+### Step 3 — Get a free Groq API key
 
-- Go to https://console.groq.com
-- Sign up (free, no credit card)
-- Create an API key
+1. Go to [console.groq.com](https://console.groq.com)
+2. Sign up (free, no credit card)
+3. Create an API key
 
-### 5. Set environment variable
+### Step 4 — Set environment variables
 
 ```bash
-# Create .env file
-echo "GROQ_API_KEY=your_key_here" > .env
+cp env.example .env
+# Edit .env:
+GROQ_API_KEY=your_groq_key_here
+HF_TOKEN=your_hf_token_here     # optional — silences HF warnings
 ```
 
-### 6. Run the app
+Get a free HuggingFace token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) → Read access only.
+
+### Step 5 — Run the app
 
 ```bash
 streamlit run app.py
+# Open → http://localhost:8501
 ```
-
-Open → http://localhost:8501
 
 ---
 
@@ -93,27 +101,77 @@ Open → http://localhost:8501
 
 | Username | Password | Role |
 |----------|----------|------|
-| admin    | admin123 | Admin |
-| user     | user123  | User |
+| `admin`  | `admin123` | Admin |
+| `user`   | `user123`  | User |
 
-⚠️ Change these immediately after first login!
+⚠️ Change these after first login!
 
 ---
 
 ## 🔄 Workflow
 
-### Admin Flow
-1. Login as admin
-2. Go to **Buckets** tab → Create a bucket (e.g. "Medical")
-3. Upload PDFs into the bucket with optional tags
-4. Go to **Users** tab → Create users, assign bucket permissions
-5. Go to **Chat** tab → Test the bucket quality
+### Admin
+1. Login → **Buckets** → Create bucket → Upload PDFs
+2. **Users** → Create users → Assign bucket permissions
+3. **Chat** → Test bucket quality
 
-### User Flow
-1. Login as user
-2. See only assigned buckets in sidebar
-3. Select a bucket → Chat with its documents
-4. Every answer shows source PDF + page number
+### User
+1. Login → Select assigned bucket → Chat
+2. Every answer shows source PDF + page number
+
+---
+
+## 🧪 Running Tests
+
+### Install test dependencies
+
+```bash
+pip install pytest pytest-xdist reportlab
+pip install pytest-json-report   # optional, for JSON output
+```
+
+### Commands
+
+```bash
+# All tests (saves results to test_results/)
+python run_tests.py
+
+# Unit tests only — fast, no API calls
+python run_tests.py --unit
+
+# QA evaluation — needs Groq + PDFs uploaded
+python run_tests.py --qa
+
+# Parallel execution (fastest)
+python run_tests.py --parallel
+
+# Direct pytest commands
+pytest                                          # all tests
+pytest tests/test_auth.py -v                   # single file
+pytest tests/test_auth.py::TestPasswordHashing # single class
+pytest -n auto                                 # parallel
+```
+
+### Test results saved to `test_results/`
+
+```
+test_results/
+├── latest.json                      # most recent run summary
+├── result_20240101_120000.txt        # human-readable report
+└── result_20240101_120000.json       # JSON report (if pytest-json-report installed)
+```
+
+### QA tests — prerequisites
+
+Upload sample PDFs via admin panel before running QA tests:
+
+| PDF | Bucket name |
+|-----|-------------|
+| `medical_reference.pdf` | `Medical` |
+| `sales_playbook_q3.pdf` | `Sales` |
+| `hr_employee_handbook.pdf` | `HR` |
+
+QA tests are **skipped** (not failed) if bucket is missing or empty.
 
 ---
 
@@ -121,12 +179,12 @@ Open → http://localhost:8501
 
 ```
 PDF Upload:
-  pypdf → extract text → split into 100-word chunks (20-word overlap)
-  → sentence-transformers embed → ChromaDB collection (per bucket)
+  pypdf → extract text → 100-word chunks (20-word overlap)
+  → sentence-transformers embed (cached) → ChromaDB (per bucket)
 
 User Query:
-  embed query → cosine similarity search → top-5 chunks
-  → build context → Groq Llama 3.1 8B → answer + sources
+  embed → cosine similarity → top-5 chunks
+  → Groq Llama 3.1 8B → answer + sources (PDF name + page)
 ```
 
 ---
@@ -135,24 +193,20 @@ User Query:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| GROQ_MODEL | llama-3.1-8b-instant | LLM model |
-| EMBEDDING_MODEL | all-MiniLM-L6-v2 | Embedding model |
-| TOP_K_RESULTS | 5 | Chunks retrieved per query |
-| MAX_CHUNK_WORDS | 100 | Words per chunk |
-| CHUNK_OVERLAP | 20 | Overlap between chunks |
+| `GROQ_MODEL` | `llama-3.1-8b-instant` | LLM model |
+| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Embedding model |
+| `TOP_K_RESULTS` | `5` | Chunks per query |
+| `MAX_CHUNK_WORDS` | `100` | Words per chunk |
+| `CHUNK_OVERLAP` | `20` | Overlap between chunks |
 
 ---
 
-## 💰 Cost
+## 💰 Cost — 100% Free
 
-**100% Free:**
-- Groq: Free tier (rate limited but generous)
-- ChromaDB: Open source
-- sentence-transformers: Open source, runs locally
-- Streamlit: Open source
+Groq · ChromaDB · sentence-transformers · Streamlit — all free and open source.
 
 ---
 
 ## 📝 License
 
-MIT — free to use and modify.
+MIT

@@ -43,12 +43,30 @@ def _save_bucket_meta(meta: dict):
 
 
 def _safe_collection_name(bucket_name: str) -> str:
-    """ChromaDB collection names must be alphanumeric + underscores."""
+    """
+    ChromaDB collection name rules:
+    - 3-63 characters
+    - alphanumeric + underscores only
+    - must START and END with alphanumeric character
+    """
     import re
     safe = re.sub(r"[^a-zA-Z0-9_]", "_", bucket_name)
+    # Ensure starts with alpha
     if not safe[0].isalpha():
-        safe = "b_" + safe
-    return safe[:63]  # max 63 chars
+        safe = "b" + safe
+    # Strip trailing underscores
+    safe = safe.rstrip("_") or "bucket"
+    # Ensure ends with alphanumeric
+    if not safe[-1].isalnum():
+        safe = safe + "x"
+    # Truncate to 63 chars
+    safe = safe[:63].rstrip("_")
+    if not safe[-1].isalnum():
+        safe = safe + "x"
+    # Minimum 3 chars
+    while len(safe) < 3:
+        safe += "x"
+    return safe
 
 
 # ── Bucket CRUD ───────────────────────────────────────

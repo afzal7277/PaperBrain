@@ -24,6 +24,7 @@ ENV/
 data/users.json
 data/chroma_db/
 data/buckets.json
+junk/
 
 # Keep data folder tracked
 !data/.gitkeep
